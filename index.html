@@ -1,0 +1,97 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>FastAPI Test</title>
+</head>
+<body>
+  <button onclick="send()">送信</button>
+
+  <script>
+    async function send() {
+      const res = await fetch("http://127.0.0.1:8000/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ question: "こんにちはfrom front" })
+      });
+
+      const data = await res.json();
+      console.log(data);
+      alert(JSON.stringify(data));
+    }
+  </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>RAG PDF Upload</title>
+</head>
+<body>
+  <h2>PDFアップロード</h2>
+
+  <input type="file" id="pdfFile" accept="application/pdf" />
+  <button onclick="uploadPdf()">アップロード</button>
+
+  <p id="result"></p>
+
+  <hr>
+
+  <h2>質問</h2>
+  <input type="text" id="question" size="50">
+  <button onclick="ask()">送信</button>
+
+  <p id="answer"></p>
+
+<script>
+// ローカル用
+// const API_BASE = "http://127.0.0.1:8000";
+
+// Render用
+const API_BASE = "https://rag-fastapi-backend-awpm.onrender.com";
+
+
+async function uploadPdf() {
+  const fileInput = document.getElementById("pdfFile");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("PDFを選択してください");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/upload_pdf`, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  document.getElementById("result").innerText =
+    `登録チャンク数: ${data.chunks}`;
+}
+
+async function ask() {
+  const question = document.getElementById("question").value;
+
+  const res = await fetch(`${API_BASE}/ask`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ question })
+  });
+
+  const data = await res.json();
+  document.getElementById("answer").innerText = data.answer;
+}
+</script>
+</body>
+</html>
