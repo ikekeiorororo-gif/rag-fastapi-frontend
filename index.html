@@ -91,7 +91,7 @@ async function uploadPdf() {
   const file = fileInput.files[0];
 
   const result = document.getElementById("result");
-  const loading = document.getElementById("loading");
+  // const loading = document.getElementById("loading");
   const progressArea = document.getElementById("progressArea");
   const progressBar = document.getElementById("progressBar");
   const progressText = document.getElementById("progressText");
@@ -106,7 +106,7 @@ async function uploadPdf() {
 
   // 初期化
   result.innerText = "";
-  loading.style.display = "block";
+  // loading.style.display =  "none";
   progressArea.style.display = "block";
   progressBar.value = 0;
   progressText.innerText = "0%";
@@ -124,7 +124,7 @@ async function uploadPdf() {
   };
 
   xhr.onload = function () {
-    loading.style.display = "none";
+    // loading.style.display = "none";
     progressArea.style.display = "none";
 
     if (xhr.status === 200) {
@@ -136,7 +136,7 @@ async function uploadPdf() {
   };
 
   xhr.onerror = function () {
-    loading.style.display = "none";
+    // loading.style.display = "none";
     progressArea.style.display = "none";
     result.innerText = "通信エラーが発生しました";
   };
