@@ -62,6 +62,27 @@
 // Render用
 const API_BASE = "https://rag-fastapi-backend-awpm.onrender.com";
 
+const uploadPdf = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  setStatus("uploading");
+  setPhase("upload");
+
+  const res = await fetch(
+    "https://rag-fastapi-backend-awpm.onrender.com/upload_pdf",
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  const data = await res.json();
+
+  setTaskId(data.task_id);
+  setStatus("queued");
+};
+
 
 // async function uploadPdf() {
 //   const fileInput = document.getElementById("pdfFile");
@@ -84,6 +105,14 @@ const API_BASE = "https://rag-fastapi-backend-awpm.onrender.com";
 //   document.getElementById("result").innerText =
 //     `登録チャンク数: ${data.chunks}`;
 // }
+
+const [taskId, setTaskId] = useState<string | null>(null);
+const [status, setStatus] = useState<string>("");
+const [phase, setPhase] = useState<string>("");
+const [chunks, setChunks] = useState<number | null>(null);
+const [error, setError] = useState<string | null>(null);
+
+
 
 
 async function uploadPdf() {
@@ -163,6 +192,89 @@ async function ask() {
   const data = await res.json();
   document.getElementById("answer").innerText = data.answer;
 }
+
+
+
+
+
+
+
+//最重要ポーリング本体
+useEffect(() => {
+  if (!taskId) return;
+
+  const interval = setInterval(async () => {
+    try {
+      const res = await fetch(
+        `https://rag-fastapi-backend-awpm.onrender.com/status/${taskId}`
+      );
+
+      const data = await res.json();
+
+      setStatus(data.status);
+      setPhase(data.phase ?? "");
+
+      if (data.chunks !== undefined) {
+        setChunks(data.chunks);
+      }
+
+      // ✅ 終了条件
+      if (data.status === "completed" || data.status === "error") {
+        clearInterval(interval);
+      }
+
+      if (data.status === "error") {
+        setError(data.message ?? "Unknown error");
+      }
+    } catch (e) {
+      console.error(e);
+      setError("通信エラーが発生しました");
+      clearInterval(interval);
+    }
+  }, 1500); // ← 1.5秒が最適
+
+  return () => clearInterval(interval);
+}, [taskId]);
+
+
+
+//表示
+const phaseLabel = (phase: string) => {
+  switch (phase) {
+    case "split":
+      return "PDFを分割しています…";
+    case "embed":
+      return "Embedding を作成しています…";
+    case "upsert":
+      return "Pinecone に登録しています…";
+    case "done":
+      return "完了しました！";
+    default:
+      return "処理中です…";
+  }
+};
+
+
+{status && (
+  <div className="mt-4">
+    <p>{phaseLabel(phase)}</p>
+
+    {status === "completed" && (
+      <p>登録チャンク数：{chunks}</p>
+    )}
+
+    {error && (
+      <p className="text-red-500">{error}</p>
+    )}
+  </div>
+)}
+
+//くるくるスピナー
+{status !== "completed" && !error && (
+  <div className="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+)}
+
+
 </script>
 </body>
 </html>
