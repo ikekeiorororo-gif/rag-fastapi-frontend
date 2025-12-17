@@ -23,7 +23,7 @@
     }
   </script>
 </body>
-</html> -->
+</html> ////////////////////////////////////////////////////////////////////////////-->
 
 
 <!DOCTYPE html>
@@ -37,6 +37,13 @@
 
   <input type="file" id="pdfFile" accept="application/pdf" />
   <button onclick="uploadPdf()">アップロード</button>
+
+  <div id="progressArea" style="display:none; margin-top:10px;">
+  <progress id="progressBar" value="0" max="100" style="width:300px;"></progress>
+  <span id="progressText">0%</span>
+</div>
+
+
 
   <p id="result"></p>
 
@@ -56,9 +63,38 @@
 const API_BASE = "https://rag-fastapi-backend-awpm.onrender.com";
 
 
+// async function uploadPdf() {
+//   const fileInput = document.getElementById("pdfFile");
+//   const file = fileInput.files[0];
+
+//   if (!file) {
+//     alert("PDFを選択してください");
+//     return;
+//   }
+
+//   const formData = new FormData();
+//   formData.append("file", file);
+
+//   const res = await fetch(`${API_BASE}/upload_pdf`, {
+//     method: "POST",
+//     body: formData
+//   });
+
+//   const data = await res.json();
+//   document.getElementById("result").innerText =
+//     `登録チャンク数: ${data.chunks}`;
+// }
+
+
 async function uploadPdf() {
   const fileInput = document.getElementById("pdfFile");
   const file = fileInput.files[0];
+
+  const result = document.getElementById("result");
+  const loading = document.getElementById("loading");
+  const progressArea = document.getElementById("progressArea");
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
 
   if (!file) {
     alert("PDFを選択してください");
@@ -68,15 +104,49 @@ async function uploadPdf() {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_BASE}/upload_pdf`, {
-    method: "POST",
-    body: formData
-  });
+  // 初期化
+  result.innerText = "";
+  loading.style.display = "block";
+  progressArea.style.display = "block";
+  progressBar.value = 0;
+  progressText.innerText = "0%";
 
-  const data = await res.json();
-  document.getElementById("result").innerText =
-    `登録チャンク数: ${data.chunks}`;
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", `${API_BASE}/upload_pdf`, true);
+
+  // アップロード進捗
+  xhr.upload.onprogress = function (event) {
+    if (event.lengthComputable) {
+      const percent = Math.round((event.loaded / event.total) * 100);
+      progressBar.value = percent;
+      progressText.innerText = `${percent}%`;
+    }
+  };
+
+  xhr.onload = function () {
+    loading.style.display = "none";
+    progressArea.style.display = "none";
+
+    if (xhr.status === 200) {
+      const data = JSON.parse(xhr.responseText);
+      result.innerText = `登録チャンク数: ${data.chunks}`;
+    } else {
+      result.innerText = "アップロードに失敗しました";
+    }
+  };
+
+  xhr.onerror = function () {
+    loading.style.display = "none";
+    progressArea.style.display = "none";
+    result.innerText = "通信エラーが発生しました";
+  };
+
+  xhr.send(formData);
 }
+
+
+
+
 
 async function ask() {
   const question = document.getElementById("question").value;
