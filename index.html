@@ -123,17 +123,18 @@ async function uploadPdf() {
     }
   };
 
-  xhr.onload = function () {
-    // loading.style.display = "none";
-    progressArea.style.display = "none";
+xhr.onload = function () {
+  progressArea.style.display = "none";
 
-    if (xhr.status === 200) {
-      const data = JSON.parse(xhr.responseText);
-      result.innerText = `登録チャンク数: ${data.chunks}`;
-    } else {
-      result.innerText = "アップロードに失敗しました";
-    }
-  };
+  if (xhr.status === 200 || xhr.status === 202) {
+    const data = JSON.parse(xhr.responseText);
+    result.innerText = "アップロード完了。処理中です…";
+    console.log("job_id:", data.job_id);
+  } else {
+    result.innerText = "アップロードに失敗しました";
+  }
+};
+
 
   xhr.onerror = function () {
     // loading.style.display = "none";
